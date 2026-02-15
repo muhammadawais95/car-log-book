@@ -1,3 +1,11 @@
 <Solution>
-  <Project Path="src/CarLogBook.csproj" />
+  <Folder Name="/Solution Items/">
+    <File Path="CHANGELOG.txt" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src/CarLogBook.Android/CarLogBook.Android.csproj" Id="fd0a672a-08cf-4381-b6e7-fdd4e6ae79a7">
+    <Deploy Solution="Debug|*" />
+  </Project>
+  <Project Path="src/CarLogBook.Domain/CarLogBook.Domain.csproj" />
+  <Project Path="src/CarLogBook.Infrastructure/CarLogBook.Infrastructure.csproj" Id="54960b38-4737-4f0f-b49b-1dac6e48bbf5" />
 </Solution>
