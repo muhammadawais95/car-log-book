@@ -1,4 +1,4 @@
-﻿namespace CarLogBook.Domain;
+namespace CarLogBook.Domain;
 
 public sealed class MaintenanceEvent
 {
@@ -14,5 +14,7 @@ public sealed class MaintenanceEvent
 
     public Money Cost { get; set; }
 
-    public string? Notes { get; set; } 
+    public string? Notes { get; set; }
+
+    public MaintenanceCategory? Category { get; set; }
 }

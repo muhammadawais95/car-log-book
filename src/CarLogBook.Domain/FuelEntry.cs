@@ -1,4 +1,4 @@
-﻿namespace CarLogBook.Domain;
+namespace CarLogBook.Domain;
 
 public sealed class FuelEntry
 {
@@ -21,4 +21,8 @@ public sealed class FuelEntry
     public bool IsFullTank { get; set; }
 
     public string Notes { get; set; } = String.Empty;
+
+    public FuelType? FuelType { get; set; }
+
+    public FuelStation? FuelStation { get; set; }
 }
