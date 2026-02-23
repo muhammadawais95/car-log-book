@@ -1,0 +1,75 @@
+@page "/maintenance"
+@inject IMaintenanceEventService MaintenanceEventService
+@inject IMaintenanceCategoryService MaintenanceCategoryService
+@inject ICarService CarService
+@inject NavigationManager Navigation
+
+<h3>Maintenance Events</h3>
+
+<p>
+    <a href="/maintenance/edit/new" class="btn btn-primary">Add New Maintenance Event</a>
+</p>
+
+@if (maintenanceEvents == null)
+{
+    <p>Loading...</p>
+}
+else if (!maintenanceEvents.Any())
+{
+    <p>No maintenance events found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Car</th>
+                <th>Category</th>
+                <th>Odometer</th>
+                <th>Cost</th>
+                <th>Notes</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var evt in maintenanceEvents)
+            {
+                <tr>
+                    <td>@evt.DateUtc.ToLocalTime().ToString("g")</td>
+                    <td>@GetCarName(evt.CarId)</td>
+                    <td>@GetCategoryName(evt.CategoryId)</td>
+                    <td>@evt.Odometer?.Kilometers</td>
+                    <td>@evt.Cost?.Amount</td>
+                    <td>@evt.Notes</td>
+                    <td>
+                        <a href="/maintenance/edit/@evt.Id" class="btn btn-sm btn-primary">Edit</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteMaintenanceEvent(evt.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<MaintenanceEvent>? maintenanceEvents;
+    private List<Car>? cars;
+    private List<MaintenanceCategory>? categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        maintenanceEvents = (await MaintenanceEventService.GetAllAsync()).ToList();
+        cars = (await CarService.GetAllAsync()).ToList();
+        categories = (await MaintenanceCategoryService.GetAllAsync()).ToList();
+    }
+
+    private string GetCarName(Guid carId) => cars?.FirstOrDefault(c => c.Id == carId)?.Name ?? "Unknown";
+    private string GetCategoryName(Guid categoryId) => categories?.FirstOrDefault(c => c.Id == categoryId)?.Name ?? "Unknown";
+
+    private async Task DeleteMaintenanceEvent(Guid id)
+    {
+        await MaintenanceEventService.DeleteAsync(id);
+        maintenanceEvents = (await MaintenanceEventService.GetAllAsync()).ToList();
+    }
+}

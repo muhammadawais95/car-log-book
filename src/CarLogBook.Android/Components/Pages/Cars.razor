@@ -1,0 +1,64 @@
+@page "/cars"
+@inject ICarService CarService
+@inject NavigationManager Navigation
+
+<h3>Cars</h3>
+
+<p>
+    <a href="/cars/edit/new" class="btn btn-primary">Add New Car</a>
+</p>
+
+@if (cars == null)
+{
+    <p>Loading...</p>
+}
+else if (!cars.Any())
+{
+    <p>No cars found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Make</th>
+                <th>Model</th>
+                <th>Year</th>
+                <th>License Plate</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var car in cars)
+            {
+                <tr>
+                    <td>@car.Name</td>
+                    <td>@car.Manufacturer</td>
+                    <td>@car.Model</td>
+                    <td>@car.Year</td>
+                    <td>@car.LicensePlate</td>
+                    <td>
+                        <a href="/cars/edit/@car.Id" class="btn btn-sm btn-primary">Edit</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteCar(car.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Car>? cars;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cars = (await CarService.GetAllAsync()).ToList();
+    }
+
+    private async Task DeleteCar(Guid id)
+    {
+        await CarService.DeleteAsync(id);
+        cars = (await CarService.GetAllAsync()).ToList();
+    }
+}

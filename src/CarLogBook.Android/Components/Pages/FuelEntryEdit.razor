@@ -1,0 +1,150 @@
+@page "/fuelentries/edit/{Id:guid}"
+@inject IFuelEntryService FuelEntryService
+@inject IFuelTypeService FuelTypeService
+@inject IFuelStationService FuelStationService
+@inject ICarService CarService
+@inject NavigationManager Navigation
+
+<h3>@(isNew ? "Add Fuel Entry" : "Edit Fuel Entry")</h3>
+
+@if (fuelEntry == null || cars == null || fuelTypes == null || fuelStations == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="fuelEntry" OnValidSubmit="HandleValidSubmit">
+        <div class="mb-3">
+            <label class="form-label">Car</label>
+            <select class="form-control" @bind="fuelEntry.CarId">
+                <option value="">Select Car</option>
+                @foreach (var car in cars)
+                {
+                    <option value="@car.Id">@car.Name</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Date</label>
+            <InputDate class="form-control" @bind-Value="localDate" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Fuel Type</label>
+            <select class="form-control" @bind="fuelEntry.FuelTypeId">
+                <option value="">Select Fuel Type</option>
+                @foreach (var ft in fuelTypes)
+                {
+                    <option value="@ft.Id">@ft.Name</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Fuel Station</label>
+            <select class="form-control" @bind="fuelEntry.FuelStationId">
+                <option value="">Select Fuel Station</option>
+                @foreach (var fs in fuelStations)
+                {
+                    <option value="@fs.Id">@fs.Name</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Odometer (km)</label>
+            <InputNumber class="form-control" @bind-Value="odometer" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Volume (liters)</label>
+            <InputNumber class="form-control" @bind-Value="volume" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Cost</label>
+            <InputNumber class="form-control" @bind-Value="cost" />
+        </div>
+        <div class="mb-3">
+            <label class="form-check">
+                <InputCheckbox class="form-check-input" @bind-Value="fuelEntry.IsFullTank" />
+                Full Tank
+            </label>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <InputText class="form-control" @bind-Value="fuelEntry.Notes" />
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private FuelEntry fuelEntry = new() 
+    { 
+        Id = Guid.NewGuid(), 
+        CarId = Guid.Empty,
+        FuelTypeId = Guid.Empty,
+        FuelStationId = Guid.Empty,
+        DateUtc = DateTime.UtcNow,
+        Notes = ""
+    };
+    private bool isNew;
+    private DateTime localDate = DateTime.Now;
+    private decimal odometer;
+    private decimal volume;
+    private decimal cost;
+    private List<Car>? cars;
+    private List<FuelType>? fuelTypes;
+    private List<FuelStation>? fuelStations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cars = (await CarService.GetAllAsync()).ToList();
+        fuelTypes = (await FuelTypeService.GetAllAsync()).ToList();
+        fuelStations = (await FuelStationService.GetAllAsync()).ToList();
+
+        isNew = Id == Guid.Empty || Id == new Guid();
+        
+        if (!isNew)
+        {
+            var existing = await FuelEntryService.GetByIdAsync(Id);
+            if (existing != null)
+            {
+                fuelEntry = existing;
+                localDate = existing.DateUtc.ToLocalTime();
+                odometer = existing.Odometer?.Kilometers ?? 0;
+                volume = existing.Volume?.Liters ?? 0;
+                cost = existing.Cost?.Amount ?? 0;
+            }
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        fuelEntry.DateUtc = localDate.ToUniversalTime();
+        
+        if (odometer > 0)
+            fuelEntry.Odometer = new OdometerReading(odometer);
+        if (volume > 0)
+            fuelEntry.Volume = new FuelVolume(volume);
+        if (cost > 0)
+            fuelEntry.Cost = new Money(cost, "PKR");
+
+        if (isNew)
+        {
+            await FuelEntryService.CreateAsync(fuelEntry);
+        }
+        else
+        {
+            await FuelEntryService.UpdateAsync(fuelEntry);
+        }
+
+        Navigation.NavigateTo("/fuelentries");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/fuelentries");
+    }
+}

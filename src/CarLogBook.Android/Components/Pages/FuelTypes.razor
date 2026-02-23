@@ -1,0 +1,56 @@
+@page "/fueltypes"
+@inject IFuelTypeService FuelTypeService
+@inject NavigationManager Navigation
+
+<h3>Fuel Types</h3>
+
+<p>
+    <a href="/fueltypes/edit/new" class="btn btn-primary">Add New Fuel Type</a>
+</p>
+
+@if (fuelTypes == null)
+{
+    <p>Loading...</p>
+}
+else if (!fuelTypes.Any())
+{
+    <p>No fuel types found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var fuelType in fuelTypes)
+            {
+                <tr>
+                    <td>@fuelType.Name</td>
+                    <td>
+                        <a href="/fueltypes/edit/@fuelType.Id" class="btn btn-sm btn-primary">Edit</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteFuelType(fuelType.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<FuelType>? fuelTypes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        fuelTypes = (await FuelTypeService.GetAllAsync()).ToList();
+    }
+
+    private async Task DeleteFuelType(Guid id)
+    {
+        await FuelTypeService.DeleteAsync(id);
+        fuelTypes = (await FuelTypeService.GetAllAsync()).ToList();
+    }
+}

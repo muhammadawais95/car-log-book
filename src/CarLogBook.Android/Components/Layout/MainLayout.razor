@@ -1,17 +1,33 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@inject CarLogBook.Infrastructure.ThemeService Theme
+@implements IDisposable
 
-<div class="page">
+<div class="page" data-theme="@Theme.CurrentTheme">
     <div class="sidebar">
         <NavMenu />
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="top-row">
+            <span></span>
+            <button class="theme-toggle" @onclick="Theme.ToggleTheme" title="Toggle theme">
+                @(Theme.IsDarkMode ? "☀️" : "🌙")
+            </button>
         </div>
-
-        <article class="content px-4">
+        <div class="content px-4">
             @Body
-        </article>
+        </div>
     </main>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Theme.OnThemeChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        Theme.OnThemeChanged -= StateHasChanged;
+    }
+}

@@ -1,0 +1,56 @@
+@page "/fuelstations"
+@inject IFuelStationService FuelStationService
+@inject NavigationManager Navigation
+
+<h3>Fuel Stations</h3>
+
+<p>
+    <a href="/fuelstations/edit/new" class="btn btn-primary">Add New Fuel Station</a>
+</p>
+
+@if (fuelStations == null)
+{
+    <p>Loading...</p>
+}
+else if (!fuelStations.Any())
+{
+    <p>No fuel stations found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var station in fuelStations)
+            {
+                <tr>
+                    <td>@station.Name</td>
+                    <td>
+                        <a href="/fuelstations/edit/@station.Id" class="btn btn-sm btn-primary">Edit</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteFuelStation(station.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<FuelStation>? fuelStations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        fuelStations = (await FuelStationService.GetAllAsync()).ToList();
+    }
+
+    private async Task DeleteFuelStation(Guid id)
+    {
+        await FuelStationService.DeleteAsync(id);
+        fuelStations = (await FuelStationService.GetAllAsync()).ToList();
+    }
+}

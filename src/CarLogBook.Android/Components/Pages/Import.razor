@@ -1,0 +1,92 @@
+@page "/import"
+@inject IXmlImportService XmlImportService
+@inject IFuelTypeService FuelTypeService
+@inject IFuelStationService FuelStationService
+@inject ICarService CarService
+
+<h3>Import Data from XML</h3>
+
+<p>Import your car log book data from an XML file.</p>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert alert-info">@message</div>
+}
+
+<button class="btn btn-primary" @onclick="ImportData" disabled="@isImporting">
+    @(isImporting ? "Importing..." : "Import XML Data")
+</button>
+
+@if (importResult != null)
+{
+    <div class="mt-3">
+        <h4>Import Results:</h4>
+        <ul>
+            <li>Cars: @importResult.Cars.Count</li>
+            <li>Fuel Types: @importResult.FuelTypes.Count</li>
+            <li>Fuel Stations: @importResult.FuelStations.Count</li>
+            <li>Fuel Entries: @importResult.FuelEntries.Count</li>
+            <li>Maintenance Categories: @importResult.MaintenanceCategories.Count</li>
+            <li>Maintenance Events: @importResult.MaintenanceEvents.Count</li>
+        </ul>
+    </div>
+}
+
+@code {
+    private bool isImporting;
+    private string message = string.Empty;
+    private XmlImportResult? importResult;
+
+    private async Task ImportData()
+    {
+        isImporting = true;
+        message = string.Empty;
+
+        try
+        {
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, "Seeding", "carlogbook.xml");
+            
+            if (!File.Exists(xmlPath))
+            {
+                message = "XML file not found.";
+                return;
+            }
+
+            importResult = await XmlImportService.ImportFromFileAsync(xmlPath);
+            
+            foreach (var fuelType in importResult.FuelTypes)
+            {
+                await FuelTypeService.CreateAsync(new FuelType { Id = fuelType.Id, Name = fuelType.Name });
+            }
+
+            foreach (var station in importResult.FuelStations)
+            {
+                await FuelStationService.CreateAsync(new FuelStation { Id = station.Id, Name = station.Name });
+            }
+
+            foreach (var car in importResult.Cars)
+            {
+                await CarService.CreateAsync(new Car
+                {
+                    Id = car.Id,
+                    Name = car.Name,
+                    Manufacturer = car.Make,
+                    Model = car.Model,
+                    Year = car.ManufacturedYear,
+                    LicensePlate = car.RegistrationNumber,
+                    IsArchived = !car.IsActive
+                });
+            }
+
+            message = "Data imported successfully!";
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isImporting = false;
+        }
+    }
+}

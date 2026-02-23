@@ -1,12 +1,14 @@
-﻿namespace CarLogBook.Domain;
+namespace CarLogBook.Domain;
 
 public sealed class Money
 {
-    public decimal Amount { get; }
+    public decimal Amount { get; set; }
 
-    public string Currency { get; }
+    public string Currency { get; set; } = "USD";
 
-    private Money(decimal amount, string currency)
+    public Money() { }
+
+    public Money(decimal amount, string currency)
     {
         if (amount < 0)
             throw new ArgumentOutOfRangeException(nameof(amount));

@@ -1,14 +1,23 @@
 using System.Globalization;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace CarLogBook.Infrastructure.Services;
 
 public sealed class XmlImportService : IXmlImportService
 {
+    private readonly ILogger<XmlImportService> _logger;
     private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    public XmlImportService(ILogger<XmlImportService> logger)
+    {
+        _logger = logger;
+    }
 
     public async Task<XmlImportResult> ImportFromFileAsync(string filePath)
     {
+        _logger.LogInformation("Starting XML import from file: {FilePath}", filePath);
+        
         var content = await File.ReadAllTextAsync(filePath);
         var doc = XDocument.Parse(content);
 
@@ -22,6 +31,8 @@ public sealed class XmlImportService : IXmlImportService
         var dataValue = doc.Root?.Element("DATA_VALUE");
         if (dataValue != null)
         {
+            _logger.LogDebug("Parsing DATA_VALUE section");
+
             fuelTypes = ParseFuelTypes(dataValue);
             fuelStations = ParseFuelStations(dataValue);
             maintenanceCategories = ParseMaintenanceCategories(dataValue);
@@ -30,14 +41,19 @@ public sealed class XmlImportService : IXmlImportService
         var carsElement = doc.Root?.Element("CAR");
         if (carsElement != null)
         {
+            _logger.LogDebug("Parsing CAR section");
             cars = ParseCars(carsElement);
         }
 
         var logElement = doc.Root?.Element("LOG");
         if (logElement != null)
         {
+            _logger.LogDebug("Parsing LOG section");
             (fuelEntries, maintenanceEvents) = ParseLogEntries(logElement);
         }
+
+        _logger.LogInformation("XML import completed. Cars: {CarCount}, FuelTypes: {FuelTypeCount}, FuelStations: {FuelStationCount}, FuelEntries: {FuelEntryCount}, MaintenanceCategories: {CategoryCount}, MaintenanceEvents: {MaintenanceEventCount}",
+            cars.Count, fuelTypes.Count, fuelStations.Count, fuelEntries.Count, maintenanceCategories.Count, maintenanceEvents.Count);
 
         return new XmlImportResult
         {
